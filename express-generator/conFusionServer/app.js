@@ -5,6 +5,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose');
+var session = require('express-session');
+var FileStore = require('session-file-store')(session);
+
 
 //models
 const Dishes = require('./models/dishes');
@@ -41,13 +44,22 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser('12345-67890-09876-54321'));
 
 
+/*session*/
+app.use(session({
+  name: 'session-id',
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
+}));
 
-
+//authentication function
 function auth (req, res, next) {
   console.log(req.headers);
   
   //if user hasnt been authernticated yet
-  if (!req.signedCookies.user) {
+  //if (!req.signedCookies.user) {
+  if (!req.session.user) {
 
     //authorization header
     var authHeader = req.headers.authorization;
@@ -83,7 +95,9 @@ function auth (req, res, next) {
     if (user == 'admin' && pass == 'password') {
       // authorized
       //setup the cookie on response message
-      res.cookie('user','admin',{signed: true});
+      //res.cookie('user','admin',{signed: true});
+      
+      req.session.user = 'admin';
       next(); 
     } else {
       //wrong information
@@ -97,7 +111,8 @@ function auth (req, res, next) {
   //has beem autherised
   else {
       //user == admin
-      if (req.signedCookies.user === 'admin') {
+      //if (req.signedCookies.user === 'admin') {
+      if (req.session.user === 'admin') {
           next();
       }
       //wrong user
