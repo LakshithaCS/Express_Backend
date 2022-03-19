@@ -37,6 +37,57 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+
+
+function auth (req, res, next) {
+  console.log(req.headers);
+  
+  //authorization header
+  var authHeader = req.headers.authorization;
+  
+  //if there is no authorization header
+  //error
+  if (!authHeader) {
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');
+      err.status = 401;
+      next(err);
+      return;
+  }
+
+  /*if authorization header exist*/
+
+  /*
+  *
+    extract username and password by dycripting
+    exaple header => "Base asad3232s23radsrase4asea" 
+  *
+  */
+
+  //split values by ' '     =>     [Base,asad3232s23radsrase4asea]
+  //take second part        =>     asad3232s23radsrase4asea
+  //dycrpit using base64    =>     dycrpition(asad3232s23radsrase4asea) = usename:password
+  //split from ':'          =>     [username, password]
+  var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  
+  var user = auth[0];
+  var pass = auth[1];
+  
+  if (user == 'admin' && pass == 'password') {
+      next(); // authorized
+  } else {
+      //wrong information
+      var err = new Error('You are not authenticated!');
+      res.setHeader('WWW-Authenticate', 'Basic');      
+      err.status = 401;
+      next(err);
+  }
+}
+
+/****authetication****/
+app.use(auth);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
