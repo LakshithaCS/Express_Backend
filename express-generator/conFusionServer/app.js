@@ -53,7 +53,38 @@ app.use(session({
   store: new FileStore()
 }));
 
+//user can access '/' and '/users' without authentication
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 //authentication function
+function auth (req, res, next) {
+    console.log(req.session);
+
+  //if sesseion.user not null (logged in)
+  if(!req.session.user) {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
+  }
+  //otherwise
+  else {
+    //if user=='authenticated'
+    //log in
+    if (req.session.user === 'authenticated') {
+      next();
+    }
+    //wrong
+    else {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
+    }
+  }
+}
+
+/*
+//authentication function - with cookies and sessions
 function auth (req, res, next) {
   console.log(req.headers);
   
@@ -74,14 +105,11 @@ function auth (req, res, next) {
       return;
     }
 
-    /*if authorization header exist*/
+    //if authorization header exist
 
-    /*
-    *
-      extract username and password by dycripting
-      exaple header => "Base asad3232s23radsrase4asea" 
-    *
-    */
+    //extract username and password by dycripting
+    //exaple header => "Base asad3232s23radsrase4asea" 
+  
 
     //split values by ' '     =>     [Base,asad3232s23radsrase4asea]
     //take second part        =>     asad3232s23radsrase4asea
@@ -123,14 +151,14 @@ function auth (req, res, next) {
       }
   }
 }
+*/
 
 /****authetication****/
 app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/dishes',dishRouter);
 app.use('/promotions',promoRouter);
 app.use('/leaders',leaderRouter);
