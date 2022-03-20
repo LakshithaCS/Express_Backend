@@ -7,6 +7,8 @@ var logger = require('morgan');
 const mongoose = require('mongoose');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
+var passport = require('passport');
+var authenticate = require('./authenticate');
 
 
 //models
@@ -53,15 +55,35 @@ app.use(session({
   store: new FileStore()
 }));
 
+//passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 //user can access '/' and '/users' without authentication
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-//authentication function
+
+//authentication funtion with passport
+function auth (req, res, next) {
+    console.log(req.user);
+
+    if (!req.user) {
+      var err = new Error('You are not authenticated!');
+      err.status = 403;
+      next(err);
+    }
+    else {
+          next();
+    }
+}
+
+/*
+//authentication function with session
 function auth (req, res, next) {
     console.log(req.session);
 
-  //if sesseion.user not null (logged in)
+  //if session.user not null (logged in)
   if(!req.session.user) {
       var err = new Error('You are not authenticated!');
       err.status = 403;
@@ -82,9 +104,11 @@ function auth (req, res, next) {
     }
   }
 }
+*/
+
 
 /*
-//authentication function - with cookies and sessions
+//authentication function - with cookies
 function auth (req, res, next) {
   console.log(req.headers);
   

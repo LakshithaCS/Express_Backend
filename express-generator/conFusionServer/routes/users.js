@@ -1,12 +1,47 @@
 var express = require('express');
 var router = express.Router();
+var passport = require('passport');
 
 const bodyParser = require('body-parser');
 var User = require('../models/user');
 
 router.use(bodyParser.json());
 
-/***signup router***/
+/*using passport library*/
+router.post('/signup', (req, res, next) => {
+
+  //register() built in function in "passport-local-mongoose"
+  User.register(new User({username: req.body.username}), 
+    req.body.password, (err, user) => {
+    
+    //if there is error
+    if(err) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.json({err: err});
+    }
+    //otherwise
+    else {
+      //authenticate() built in function in "passport"
+      passport.authenticate('local')(req, res, () => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json({success: true, status: 'Registration Successful!'});
+      });
+    }
+  });
+});
+
+router.post('/login', passport.authenticate('local'), (req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  res.json({success: true, status: 'You are successfully logged in!'});
+});
+
+
+/*without passport*/
+/*
+//signup router
 router.post('/signup', (req, res, next) => {
 
   //find user with given username
@@ -36,7 +71,7 @@ router.post('/signup', (req, res, next) => {
 });
 
 
-/*login router*/
+///login router
 router.post('/login', (req, res, next) => {
 
   //check null null session user, not logged in
@@ -90,9 +125,9 @@ router.post('/login', (req, res, next) => {
     res.end('You are already authenticated!');
   }
 })
+*/
 
-
-/*logout router*/
+//logout router
 router.get('/logout', (req, res) => {
 
   //if session is not null (logged in)
